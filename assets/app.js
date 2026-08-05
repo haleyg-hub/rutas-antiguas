@@ -156,8 +156,70 @@
     };
   }
 
+  function blankForm() {
+    return { name: '', phone: '', email: '', message: '' };
+  }
+
   function blankPlan() {
-    return { date: todayISO(), guests: 2, start: null, items: [], name: '', contact: '', notes: '' };
+    return { date: todayISO(), guests: 2, start: null, items: [], form: blankForm() };
+  }
+
+  /* ══════════════════════════ enquiry form ══════════════════════════ */
+
+  var DISCLAIMER = 'NO TOUR BOOKED UNTIL CONFIRMED BY OUR AGENCY — ' +
+                   'WE WILL CONTACT YOU DIRECTLY TO CONFIRM.';
+
+  /* One definition, rendered in both the Contact page and the itinerary, so the
+   * two can never drift apart in fields or validation. */
+  function formHTML(p, v, messageLabel, messagePlaceholder) {
+    v = v || blankForm();
+    return '' +
+      '<label class="field"><span>Name <i>required</i></span>' +
+        '<input type="text" id="' + p + 'Name" autocomplete="name" value="' + esc(v.name) + '" placeholder="Full name" /></label>' +
+      '<label class="field"><span>Phone number <i>required</i></span>' +
+        '<input type="tel" id="' + p + 'Phone" autocomplete="tel" inputmode="tel" value="' + esc(v.phone) + '" placeholder="+1 555 123 4567" /></label>' +
+      '<label class="field"><span>Email <i>required</i></span>' +
+        '<input type="email" id="' + p + 'Email" autocomplete="email" inputmode="email" value="' + esc(v.email) + '" placeholder="you@example.com" /></label>' +
+      '<label class="field"><span>' + esc(messageLabel) + ' <i>required</i></span>' +
+        '<textarea id="' + p + 'Message" rows="4" placeholder="' + esc(messagePlaceholder) + '">' + esc(v.message) + '</textarea></label>';
+  }
+
+  function readForm(p) {
+    return {
+      name: ($(p + 'Name') || {}).value ? $(p + 'Name').value.trim() : '',
+      phone: ($(p + 'Phone') || {}).value ? $(p + 'Phone').value.trim() : '',
+      email: ($(p + 'Email') || {}).value ? $(p + 'Email').value.trim() : '',
+      message: ($(p + 'Message') || {}).value ? $(p + 'Message').value.trim() : ''
+    };
+  }
+
+  /* All four are required. Phone and email are both checked because either one
+   * may be the only way back to a guest whose other detail was mistyped. */
+  function formErrors(v) {
+    var errs = [];
+    if (!v.name) errs.push({ key: 'Name', msg: 'Please add your name' });
+    if (!v.phone) errs.push({ key: 'Phone', msg: 'Please add a phone number' });
+    else if ((v.phone.replace(/\D/g, '') || '').length < 7) errs.push({ key: 'Phone', msg: 'That phone number looks too short' });
+    if (!v.email) errs.push({ key: 'Email', msg: 'Please add an email address' });
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) errs.push({ key: 'Email', msg: 'That email address looks incomplete' });
+    if (!v.message) errs.push({ key: 'Message', msg: 'Please add a message' });
+    else if (v.message.length > 4000) errs.push({ key: 'Message', msg: 'Message is too long (4000 characters max)' });
+    return errs;
+  }
+
+  function markErrors(p, errs) {
+    ['Name', 'Phone', 'Email', 'Message'].forEach(function (k) {
+      var el = $(p + k);
+      if (el) el.classList.remove('is-bad');
+    });
+    errs.forEach(function (e) {
+      var el = $(p + e.key);
+      if (el) el.classList.add('is-bad');
+    });
+    if (errs.length) {
+      var first = $(p + errs[0].key);
+      if (first) { first.focus(); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    }
   }
 
   function tourById(id) {
@@ -168,7 +230,7 @@
   function save() {
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify({
-        settings: state.settings, tours: state.tours, plan: state.plan
+        settings: state.settings, tours: state.tours, plan: state.plan, contact: state.contact
       }));
     } catch (e) { /* private mode / quota — the session still works, it just won't persist */ }
   }
@@ -294,7 +356,7 @@
     $('brandTagline').textContent = state.settings.tagline || '';
     document.title = (state.settings.operator || 'Rutas Antiguas') + ' — Build Your Own Tour';
 
-    ['menu', 'plan', 'admin'].forEach(function (v) { $('view-' + v).hidden = v !== view; });
+    ['menu', 'plan', 'contact', 'admin'].forEach(function (v) { $('view-' + v).hidden = v !== view; });
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
       t.classList.toggle('is-active', t.dataset.view === view);
     });
@@ -307,6 +369,7 @@
 
     if (view === 'menu') renderMenu();
     if (view === 'plan') renderPlan();
+    if (view === 'contact') renderContact();
     if (view === 'admin') renderAdmin();
   }
 
@@ -370,16 +433,26 @@
     setValue('planDate', plan.date);
     setValue('planGuests', plan.guests);
     setValue('planStart', plan.start || state.settings.dayStart);
-    setValue('reqName', plan.name);
-    setValue('reqContact', plan.contact);
-    setValue('reqNotes', plan.notes);
+
 
     var has = plan.items.length > 0;
     $('planEmpty').hidden = has;
     $('planSummary').hidden = !has;
     $('requestPanel').hidden = !has;
 
-    if (!has) { $('planItems').innerHTML = ''; $('sendRow').innerHTML = ''; return; }
+    if (!has) {
+      $('planItems').innerHTML = '';
+      $('sendRow').innerHTML = '';
+      $('bookingFormHost').innerHTML = '';
+      return;
+    }
+
+    // Rebuilding the form would wipe what the guest is typing, so build it once
+    // and leave it alone until the itinerary is emptied.
+    if (!$('bookingFormHost').firstChild) {
+      $('bookingFormHost').innerHTML = formHTML('bk', state.plan.form, 'Message',
+        'Anything we should know — dietary needs, mobility, a celebration, dates you are flexible on.');
+    }
 
     var sched = buildSchedule();
 
@@ -416,10 +489,7 @@
       : clockLabel(sched.startsAt) + ' – ' + clockLabel(sched.endsAt);
     $('sumTotal').textContent = money(sched.total);
 
-    var btns = ['<button class="btn" id="copyPlanBtn">Copy itinerary</button>'];
-    if (state.settings.contactEmail) btns.unshift('<button class="btn primary" id="emailPlanBtn">Email request</button>');
-    if (state.settings.whatsapp) btns.unshift('<button class="btn brass" id="waPlanBtn">WhatsApp</button>');
-    $('sendRow').innerHTML = btns.join('');
+    $('sendRow').innerHTML = sendButtons('bk', 'bookingHint', 'booking');
   }
 
   function renderCloudStatus() {
@@ -757,8 +827,7 @@
     lines.push('');
     lines.push('Date: ' + dateLabel(plan.date));
     lines.push('Guests: ' + plan.guests);
-    if (plan.name) lines.push('Name: ' + plan.name);
-    if (plan.contact) lines.push('Contact: ' + plan.contact);
+
     lines.push('');
     lines.push('ITINERARY');
     sched.legs.forEach(function (l) {
@@ -772,10 +841,164 @@
     lines.push('Time on tour: ' + durLabel(sched.duration));
     lines.push('Estimated total: ' + money(sched.total) +
                ' (' + plan.guests + ' guest' + (plan.guests === 1 ? '' : 's') + ')');
-    if (plan.notes) { lines.push(''); lines.push('Notes: ' + plan.notes); }
     lines.push('');
     lines.push('Estimate only — please confirm availability and final pricing.');
     return lines.join('\n');
+  }
+
+  function contactText(v) {
+    return [
+      state.settings.operator + ' — enquiry',
+      '',
+      'Name: ' + v.name,
+      'Phone: ' + v.phone,
+      'Email: ' + v.email,
+      '',
+      v.message
+    ].join('\n');
+  }
+
+  function bookingText(v) {
+    return [
+      planText(),
+      '',
+      'FROM',
+      'Name: ' + v.name,
+      'Phone: ' + v.phone,
+      'Email: ' + v.email,
+      '',
+      v.message,
+      '',
+      DISCLAIMER
+    ].join('\n');
+  }
+
+  function itinerarySnapshot() {
+    var sched = buildSchedule();
+    return {
+      date: state.plan.date,
+      guests: state.plan.guests,
+      start: state.plan.start,
+      estimatedTotal: sched.total,
+      currency: state.settings.currencySymbol,
+      legs: sched.legs.map(function (l) {
+        return {
+          tourId: l.tour.id,
+          name: l.tour.name,
+          start: toHHMM(l.start % 1440),
+          end: toHHMM(l.end % 1440),
+          durationMin: l.tour.durationMin,
+          price: l.tour.price,
+          priceUnit: l.tour.priceUnit,
+          warnings: l.warnings
+        };
+      })
+    };
+  }
+
+  function openHandoff(channel, text, subject) {
+    if (channel === 'whatsapp') {
+      window.open('https://wa.me/' + state.settings.whatsapp + '?text=' + encodeURIComponent(text),
+                  '_blank', 'noopener');
+    } else if (channel === 'email') {
+      window.location.href = 'mailto:' + encodeURIComponent(state.settings.contactEmail) +
+        '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
+    } else {
+      copyText(text, 'Copied — paste it to us however you like');
+    }
+  }
+
+  /* Save first, hand off second — but both are started inside the same click.
+   * Waiting for the network before opening WhatsApp or mail would lose the user
+   * gesture and get the handoff blocked as a popup on mobile Safari. Starting
+   * the save first still means an abandoned handoff leaves a record behind. */
+  function submitEnquiry(kind, prefix, channel, hintId) {
+    var v = readForm(prefix);
+    var errs = formErrors(v);
+    markErrors(prefix, errs);
+    if (errs.length) { toast(errs[0].msg); return; }
+
+    if (kind === 'booking') state.plan.form = v; else state.contact = v;
+    save();
+
+    var isBooking = kind === 'booking';
+    var text = isBooking ? bookingText(v) : contactText(v);
+    var subject = isBooking
+      ? 'Tour request — ' + dateLabel(state.plan.date) + ' — ' + v.name
+      : 'Enquiry from ' + v.name;
+
+    var hint = $(hintId);
+    var pending = null;
+
+    if (CLOUD.configured()) {
+      var row = {
+        kind: kind, name: v.name, phone: v.phone, email: v.email,
+        message: v.message, handoff: channel
+      };
+      if (isBooking) row.itinerary = itinerarySnapshot();
+      pending = CLOUD.saveEnquiry(row);
+    }
+
+    openHandoff(channel, text, subject);
+
+    if (!pending) {
+      if (hint) hint.textContent = 'Sent. No backend is configured, so this was not recorded — reply to the message to keep the thread.';
+      toast('Handed off');
+      return;
+    }
+
+    if (hint) hint.textContent = 'Saving your details…';
+    pending.then(function () {
+      if (hint) {
+        hint.textContent = isBooking
+          ? 'Request received. ' + DISCLAIMER
+          : 'Message received — we have your details and will reply personally.';
+        hint.className = 'fineprint ok';
+      }
+      toast(isBooking ? 'Request sent' : 'Message sent');
+    }, function (err) {
+      if (hint) {
+        hint.textContent = 'We could not record this on our side (' + err.message +
+          '). Please make sure the message you just opened actually sends.';
+        hint.className = 'fineprint bad';
+      }
+      toast('Not recorded — please send the message');
+    });
+  }
+
+  function sendButtons(prefix, hintId, kind) {
+    var out = [];
+    if (state.settings.whatsapp) {
+      out.push('<button class="btn brass" data-send="whatsapp|' + prefix + '|' + hintId + '|' + kind + '">WhatsApp</button>');
+    }
+    if (state.settings.contactEmail) {
+      out.push('<button class="btn primary" data-send="email|' + prefix + '|' + hintId + '|' + kind + '">Email</button>');
+    }
+    out.push('<button class="btn" data-send="copy|' + prefix + '|' + hintId + '|' + kind + '">Copy</button>');
+    return out.join('');
+  }
+
+  function renderContact() {
+    var s = state.settings;
+    $('contactFormHost').innerHTML = formHTML('ct', state.contact, 'Message',
+      'Ask us anything — a question about a tour, a private request, dates you have in mind.');
+    $('contactRow').innerHTML = sendButtons('ct', 'contactHint', 'question');
+
+    var hint = $('contactHint');
+    if (hint && !hint.textContent) {
+      hint.className = 'fineprint';
+      hint.textContent = CLOUD.configured()
+        ? 'Your details are saved to us the moment you send, so nothing is lost if the message does not go through.'
+        : '';
+    }
+
+    var direct = [];
+    if (s.whatsapp) direct.push('<a class="btn wide" href="https://wa.me/' + esc(s.whatsapp) + '" target="_blank" rel="noopener">WhatsApp us directly</a>');
+    if (s.contactEmail) direct.push('<a class="btn wide" href="mailto:' + esc(s.contactEmail) + '">' + esc(s.contactEmail) + '</a>');
+    $('contactDirect').innerHTML = direct.length
+      ? '<h2>Or reach us directly</h2><div class="btn-row stack">' + direct.join('') + '</div>'
+      : '';
+    $('contactDirect').hidden = !direct.length;
   }
 
   function copyText(text, okMsg) {
@@ -855,6 +1078,12 @@
       if ((el = e.target.closest('[data-mv-up]'))) { moveTour(+el.dataset.mvUp, +el.dataset.mvUp - 1); return; }
       if ((el = e.target.closest('[data-mv-down]'))) { moveTour(+el.dataset.mvDown, +el.dataset.mvDown + 1); return; }
 
+      if ((el = e.target.closest('[data-send]'))) {
+        var parts = el.dataset.send.split('|');   // channel|prefix|hintId|kind
+        submitEnquiry(parts[3], parts[1], parts[0], parts[2]);
+        return;
+      }
+
       if ((el = e.target.closest('.tab'))) { view = el.dataset.view; render(); window.scrollTo(0, 0); return; }
 
       switch (e.target.id) {
@@ -917,9 +1146,12 @@
     bindPlan('planStart', 'start');
     bindPlan('planGuests', 'guests', function (v) { return Math.max(1, Math.min(40, Number(v) || 1)); });
 
-    ['reqName:name', 'reqContact:contact', 'reqNotes:notes'].forEach(function (pair) {
-      var p = pair.split(':');
-      $(p[0]).addEventListener('input', function () { state.plan[p[1]] = this.value; save(); });
+    // Keep whatever is half-typed across a reload or a tab switch.
+    document.body.addEventListener('input', function (e) {
+      var id = e.target && e.target.id;
+      if (!id) return;
+      if (id.indexOf('bk') === 0) { state.plan.form = readForm('bk'); save(); }
+      else if (id.indexOf('ct') === 0) { state.contact = readForm('ct'); save(); }
     });
 
     $('importFile').addEventListener('change', function () {
@@ -965,10 +1197,12 @@
    * first load with no network, and the guest's own plan always survives. */
   function boot(menu, stored, fromCloud) {
     var base = normalise(fromCloud ? menu : (stored || menu));
-    state = { settings: base.settings, tours: base.tours, plan: blankPlan() };
+    state = { settings: base.settings, tours: base.tours, plan: blankPlan(), contact: blankForm() };
+    if (stored && stored.contact) state.contact = Object.assign(blankForm(), stored.contact);
 
     if (stored && stored.plan) {
       var p = Object.assign(blankPlan(), stored.plan);
+      p.form = Object.assign(blankForm(), p.form || {});
       p.items = (Array.isArray(p.items) ? p.items : [])
         .filter(function (it) { return it && it.tourId; })
         .map(function (it) { return { uid: it.uid || uid(), tourId: it.tourId }; });

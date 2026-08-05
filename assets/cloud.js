@@ -175,8 +175,22 @@ window.RA_CLOUD = (function () {
     });
   }
 
+  /* Guests submit anonymously — the insert policy allows it, the select policy
+   * does not, so nobody can read back what anyone else has sent. */
+  function saveEnquiry(row) {
+    if (!configured()) return Promise.reject(new Error('No backend configured'));
+    return rest('/enquiries', {
+      method: 'POST',
+      prefer: 'return=representation',
+      body: [row]
+    }, !!session).then(function (rows) {
+      return rows && rows[0] ? rows[0].id : null;
+    });
+  }
+
   return {
     configured: configured,
+    saveEnquiry: saveEnquiry,
     user: user,
     email: email,
     signIn: signIn,

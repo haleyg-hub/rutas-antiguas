@@ -271,6 +271,39 @@ code { font-size: .92em; background: var(--brass-soft); padding: 1px 5px; border
 }
 .summary-row.total strong { font-family: var(--serif); font-size: 21px; }
 
+/* ── Enquiry / booking form ────────────────── */
+.field > span i {
+  font-style: normal; font-size: 10px; letter-spacing: .04em;
+  color: var(--brass); margin-left: 5px;
+}
+.field input.is-bad, .field textarea.is-bad {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 6%, var(--bone));
+}
+@media (prefers-color-scheme: dark) {
+  .field input.is-bad, .field textarea.is-bad { background: color-mix(in srgb, var(--danger) 14%, #1d1a18); }
+}
+
+/* The booking condition. Deliberately loud — a guest must not leave thinking
+ * a tour is reserved. */
+.disclaimer {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--brass) 12%, transparent);
+  border: 1px solid var(--brass);
+  border-radius: 10px;
+  color: var(--brass);
+  font-size: 12.5px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; line-height: 1.45;
+}
+
+.fineprint.ok  { color: var(--ok); font-weight: 500; }
+.fineprint.bad { color: var(--danger); font-weight: 500; }
+
+.btn-row.stack { flex-direction: column; }
+.btn-row.stack .btn { flex: 1 1 auto; text-align: center; text-decoration: none; line-height: 22px; }
+a.btn { display: block; color: var(--ink); }
+
 /* ── Operator status ───────────────────────── */
 .status strong { display: block; font-family: var(--serif); font-size: 16px; }
 .status .fineprint { margin-top: 4px; }

@@ -72,12 +72,28 @@
     </div>
 
     <div class="panel" id="requestPanel" hidden>
-      <h2>Send this to us</h2>
-      <label class="field"><span>Your name</span><input type="text" id="reqName" placeholder="Full name" autocomplete="name" /></label>
-      <label class="field"><span>Email or phone</span><input type="text" id="reqContact" placeholder="How we reach you" /></label>
-      <label class="field"><span>Notes</span><textarea id="reqNotes" rows="3" placeholder="Dietary needs, mobility, celebrations, anything else"></textarea></label>
+      <h2>Request this tour</h2>
+      <p class="disclaimer">No tour booked until confirmed by our agency — we will contact you directly to confirm.</p>
+      <div id="bookingFormHost"></div>
       <div class="btn-row" id="sendRow"></div>
+      <p class="fineprint" id="bookingHint"></p>
     </div>
+  </section>
+
+  <!-- ══════════════ CONTACT ══════════════ -->
+  <section class="view" id="view-contact" hidden>
+    <div class="hero">
+      <h1>Contact Us</h1>
+      <p>A question about a tour, a private request, or anything else — we answer personally.</p>
+    </div>
+
+    <div class="panel">
+      <div id="contactFormHost"></div>
+      <div class="btn-row" id="contactRow"></div>
+      <p class="fineprint" id="contactHint"></p>
+    </div>
+
+    <div class="panel" id="contactDirect"></div>
   </section>
 
   <!-- ══════════════ ADMIN ══════════════ -->
@@ -116,6 +132,7 @@
 <nav class="tabbar">
   <button class="tab is-active" data-view="menu"><span>⛩</span>Tours</button>
   <button class="tab" data-view="plan"><span>🧭</span>Itinerary<i class="badge" id="tabBadge" hidden>0</i></button>
+  <button class="tab" data-view="contact"><span>✉</span>Contact</button>
   <button class="tab" data-view="admin" id="adminTab" hidden><span>⚙</span>Operator</button>
 </nav>
 
