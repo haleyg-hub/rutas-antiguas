@@ -1,19 +1,23 @@
 /* Rutas Antiguas — backend configuration.
  *
- * Paste the two values from your own Supabase project here, then commit.
- * Supabase → Project Settings → Data API (URL) and API Keys (anon/publishable).
+ * From your own Supabase project:
+ *   Project Settings → Data API   → Project URL
+ *   Project Settings → API Keys   → anon / publishable key
  *
- * The anon key is designed to be public — it ships in the browser on every
- * Supabase site. It is not a password. What actually protects your menu is the
- * row-level security policy in supabase-setup.sql: anyone may READ the menu,
- * only your signed-in operator account may WRITE it.
+ * The URL is the project root only. Do not include /rest/v1 — the app appends
+ * /rest/v1 and /auth/v1 itself. (A pasted suffix is stripped in cloud.js, but
+ * keep this clean so it reads correctly.)
  *
- * Never put the service_role key here. That one bypasses every policy.
+ * The publishable key is designed to be public — it ships in the browser on
+ * every Supabase site and it is not a password. What actually protects the menu
+ * is the row-level security policy in supabase-setup.sql: anyone may READ it,
+ * only a signed-in operator may WRITE it.
  *
- * Leave both blank and the app runs entirely on this device, reading the
- * committed tours.json — no backend, no live publishing.
+ * Never put the service_role or secret key here. Those bypass every policy.
+ *
+ * Leave both blank and the app runs entirely on the device from tours.json.
  */
 window.RA_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: ''
+  supabaseUrl: 'https://bvypdrfphrwalhncffbk.supabase.co',
+  supabaseAnonKey: 'sb_publishable_-NofadU_H3uC7YKfKLdmBw_MohppwJD'
 };

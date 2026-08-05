@@ -20,8 +20,14 @@ window.RA_CLOUD = (function () {
     return !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
   }
 
+  /* The project root only — the API paths are appended below. Supabase's
+   * dashboard shows the URL with /rest/v1 attached, so tolerate a pasted
+   * suffix rather than failing with an opaque 404. */
   function base() {
-    return String(cfg.supabaseUrl).replace(/\/+$/, '');
+    return String(cfg.supabaseUrl)
+      .replace(/\/+$/, '')
+      .replace(/\/(rest|auth)\/v1$/, '')
+      .replace(/\/+$/, '');
   }
 
   function user() {
@@ -118,11 +124,16 @@ window.RA_CLOUD = (function () {
   function rest(path, options, authed) {
     var opts = options || {};
     var run = function (sess) {
+      /* Anonymous requests still carry the publishable key as the bearer token.
+       * Legacy anon keys are JWTs that PostgREST can fall back on; the newer
+       * sb_publishable_* keys are not, and are resolved at the gateway — which
+       * only happens when the header is present. Sending it either way matches
+       * what supabase-js does and works with both key formats. */
       var headers = {
         apikey: cfg.supabaseAnonKey,
+        Authorization: 'Bearer ' + ((sess && sess.access_token) || cfg.supabaseAnonKey),
         'Content-Type': 'application/json'
       };
-      if (sess && sess.access_token) headers.Authorization = 'Bearer ' + sess.access_token;
       if (opts.prefer) headers.Prefer = opts.prefer;
       return fetch(base() + '/rest/v1' + path, {
         method: opts.method || 'GET',
