@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#1c1917" />
+<meta name="description" content="Rutas Antiguas — build your own private tour. Choose any combination of experiences and we'll shape them into a single day." />
+<title>Rutas Antiguas — Build Your Own Tour</title>
+<link rel="stylesheet" href="./assets/app.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">RA</span>
+    <span class="brand-text">
+      <strong id="brandName">Rutas Antiguas</strong>
+      <small id="brandTagline">Luxury private tours</small>
+    </span>
+  </div>
+  <button class="icon-btn" id="adminEntry" aria-label="Operator settings" title="Operator settings">⚙</button>
+</header>
+
+<main id="app">
+
+  <!-- ══════════════ MENU ══════════════ -->
+  <section class="view" id="view-menu">
+    <div class="hero">
+      <h1>Build Your Own Tour</h1>
+      <p>Choose any combination of experiences, in any number. We sequence them into one seamless private day.</p>
+    </div>
+
+    <div class="filters" id="filters"></div>
+    <div class="tour-grid" id="tourGrid"></div>
+    <p class="empty" id="menuEmpty" hidden>No tours on the menu yet. Tap ⚙ to add your first one.</p>
+  </section>
+
+  <!-- ══════════════ ITINERARY ══════════════ -->
+  <section class="view" id="view-plan" hidden>
+    <div class="hero">
+      <h1>Your Itinerary</h1>
+      <p>Reorder freely — times recalculate around travel and rest.</p>
+    </div>
+
+    <div class="panel plan-controls">
+      <div class="field-row">
+        <label class="field">
+          <span>Date</span>
+          <input type="date" id="planDate" />
+        </label>
+        <label class="field">
+          <span>Guests</span>
+          <input type="number" id="planGuests" min="1" max="40" inputmode="numeric" />
+        </label>
+        <label class="field">
+          <span>Start</span>
+          <input type="time" id="planStart" />
+        </label>
+      </div>
+    </div>
+
+    <div id="planItems"></div>
+    <p class="empty" id="planEmpty">Nothing added yet. Browse the tours and tap <em>Add</em>.</p>
+
+    <div class="panel summary" id="planSummary" hidden>
+      <div class="summary-row"><span>Experiences</span><strong id="sumCount">0</strong></div>
+      <div class="summary-row"><span>Time on tour</span><strong id="sumDuration">—</strong></div>
+      <div class="summary-row"><span>Day runs</span><strong id="sumWindow">—</strong></div>
+      <div class="summary-row total"><span>Estimated total</span><strong id="sumTotal">—</strong></div>
+      <p class="fineprint">An estimate for the selections above, not a confirmed booking. We'll confirm availability and final pricing by reply.</p>
+    </div>
+
+    <div class="panel" id="requestPanel" hidden>
+      <h2>Send this to us</h2>
+      <label class="field"><span>Your name</span><input type="text" id="reqName" placeholder="Full name" autocomplete="name" /></label>
+      <label class="field"><span>Email or phone</span><input type="text" id="reqContact" placeholder="How we reach you" /></label>
+      <label class="field"><span>Notes</span><textarea id="reqNotes" rows="3" placeholder="Dietary needs, mobility, celebrations, anything else"></textarea></label>
+      <div class="btn-row" id="sendRow"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ ADMIN ══════════════ -->
+  <section class="view" id="view-admin" hidden>
+    <div class="hero">
+      <h1>Operator</h1>
+      <p>Edit the menu from your phone. No code, no deploy.</p>
+    </div>
+
+    <div class="panel status" id="cloudStatus"></div>
+
+    <div class="panel">
+      <div class="btn-row">
+        <button class="btn primary" id="newTourBtn">+ New tour</button>
+        <button class="btn" id="brandBtn">Brand &amp; contact</button>
+      </div>
+    </div>
+
+    <div id="adminList"></div>
+
+    <div class="panel">
+      <h2 id="backupTitle">Publish &amp; backup</h2>
+      <p class="fineprint" id="backupNote"></p>
+      <div class="btn-row">
+        <button class="btn" id="exportBtn">Export tours.json</button>
+        <button class="btn" id="copyJsonBtn">Copy JSON</button>
+        <button class="btn" id="importBtn">Import…</button>
+        <button class="btn danger" id="resetBtn">Reset to published</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" hidden />
+    </div>
+  </section>
+</main>
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="tabbar">
+  <button class="tab is-active" data-view="menu"><span>⛩</span>Tours</button>
+  <button class="tab" data-view="plan"><span>🧭</span>Itinerary<i class="badge" id="tabBadge" hidden>0</i></button>
+  <button class="tab" data-view="admin" id="adminTab" hidden><span>⚙</span>Operator</button>
+</nav>
+
+<!-- ══════════════ SHEET (tour detail / editor / dialogs) ══════════════ -->
+<div class="sheet-scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-head">
+    <h2 id="sheetTitle">—</h2>
+    <button class="icon-btn" id="sheetClose" aria-label="Close">✕</button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+  <div class="sheet-foot" id="sheetFoot"></div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="./assets/config.js"></script>
+<script src="./assets/cloud.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>
