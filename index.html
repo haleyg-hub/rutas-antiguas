@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#1c1917" />
+<meta name="theme-color" content="#fbf8ee" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#15160e" media="(prefers-color-scheme: dark)" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Rutas Antiguas" />
 <meta name="description" content="Rutas Antiguas — build your own private tour. Choose any combination of experiences and we'll shape them into a single day." />
 <title>Rutas Antiguas — Build Your Own Tour</title>
 <link rel="stylesheet" href="./assets/app.css" />
@@ -19,7 +25,10 @@
       <small id="brandTagline">Luxury private tours</small>
     </span>
   </div>
-  <button class="icon-btn" id="adminEntry" aria-label="Operator settings" title="Operator settings">⚙</button>
+  <div class="topbar-tools">
+    <button class="lang-btn" id="langBtn" aria-label="Language"></button>
+    <button class="icon-btn" id="adminEntry" aria-label="Operator settings" title="Operator settings">⚙</button>
+  </div>
 </header>
 
 <main id="app">
@@ -27,53 +36,65 @@
   <!-- ══════════════ MENU ══════════════ -->
   <section class="view" id="view-menu">
     <div class="hero">
-      <h1>Build Your Own Tour</h1>
-      <p>Choose any combination of experiences, in any number. We sequence them into one seamless private day.</p>
+      <h1 data-i18n="menu.title">Build Your Own Tour</h1>
+      <p data-i18n="menu.sub">Choose any combination of experiences, in any number. We sequence them into one seamless private day.</p>
     </div>
 
     <div class="filters" id="filters"></div>
     <div class="tour-grid" id="tourGrid"></div>
-    <p class="empty" id="menuEmpty" hidden>No tours on the menu yet. Tap ⚙ to add your first one.</p>
+    <p class="empty" id="menuEmpty" data-i18n="menu.empty" hidden>No tours on the menu yet. Tap ⚙ to add your first one.</p>
+
+    <div class="panel install" id="installCard" hidden>
+      <button class="install-x" id="installDismiss" data-i18n-aria="install.dismiss" aria-label="Dismiss">✕</button>
+      <div class="install-body">
+        <div class="install-mark">RA</div>
+        <div>
+          <h2 data-i18n="install.title">Keep us on your home screen</h2>
+          <p class="fineprint" id="installNote"></p>
+        </div>
+      </div>
+      <div class="btn-row" id="installRow"></div>
+    </div>
   </section>
 
   <!-- ══════════════ ITINERARY ══════════════ -->
   <section class="view" id="view-plan" hidden>
     <div class="hero">
-      <h1>Your Itinerary</h1>
-      <p>Reorder freely — times recalculate around travel and rest.</p>
+      <h1 data-i18n="plan.title">Your Itinerary</h1>
+      <p data-i18n="plan.sub">Reorder freely — times recalculate around travel and rest.</p>
     </div>
 
     <div class="panel plan-controls">
       <div class="field-row">
         <label class="field">
-          <span>Date</span>
+          <span data-i18n="plan.date">Date</span>
           <input type="date" id="planDate" />
         </label>
         <label class="field">
-          <span>Guests</span>
+          <span data-i18n="plan.guests">Guests</span>
           <input type="number" id="planGuests" min="1" max="40" inputmode="numeric" />
         </label>
         <label class="field">
-          <span>Start</span>
+          <span data-i18n="plan.start">Start</span>
           <input type="time" id="planStart" />
         </label>
       </div>
     </div>
 
     <div id="planItems"></div>
-    <p class="empty" id="planEmpty">Nothing added yet. Browse the tours and tap <em>Add</em>.</p>
+    <p class="empty" id="planEmpty" data-i18n="plan.empty">Nothing added yet. Browse the tours and tap Add.</p>
 
     <div class="panel summary" id="planSummary" hidden>
-      <div class="summary-row"><span>Experiences</span><strong id="sumCount">0</strong></div>
-      <div class="summary-row"><span>Time on tour</span><strong id="sumDuration">—</strong></div>
-      <div class="summary-row"><span>Day runs</span><strong id="sumWindow">—</strong></div>
-      <div class="summary-row total"><span>Estimated total</span><strong id="sumTotal">—</strong></div>
-      <p class="fineprint">An estimate for the selections above, not a confirmed booking. We'll confirm availability and final pricing by reply.</p>
+      <div class="summary-row"><span data-i18n="plan.experiences">Experiences</span><strong id="sumCount">0</strong></div>
+      <div class="summary-row"><span data-i18n="plan.timeOnTour">Time on tour</span><strong id="sumDuration">—</strong></div>
+      <div class="summary-row"><span data-i18n="plan.dayRuns">Day runs</span><strong id="sumWindow">—</strong></div>
+      <div class="summary-row total"><span data-i18n="plan.estTotal">Estimated total</span><strong id="sumTotal">—</strong></div>
+      <p class="fineprint" data-i18n="plan.estimateNote">An estimate for the selections above, not a confirmed booking.</p>
     </div>
 
     <div class="panel" id="requestPanel" hidden>
-      <h2>Request this tour</h2>
-      <p class="disclaimer">No tour booked until confirmed by our agency — we will contact you directly to confirm.</p>
+      <h2 data-i18n="plan.requestTitle">Request this tour</h2>
+      <p class="disclaimer" data-i18n="disclaimer">No tour booked until confirmed by our agency.</p>
       <div id="bookingFormHost"></div>
       <div class="btn-row" id="sendRow"></div>
       <p class="fineprint" id="bookingHint"></p>
@@ -83,8 +104,8 @@
   <!-- ══════════════ CONTACT ══════════════ -->
   <section class="view" id="view-contact" hidden>
     <div class="hero">
-      <h1>Contact Us</h1>
-      <p>A question about a tour, a private request, or anything else — we answer personally.</p>
+      <h1 data-i18n="contact.title">Contact Us</h1>
+      <p data-i18n="contact.sub">A question about a tour, a private request, or anything else — we answer personally.</p>
     </div>
 
     <div class="panel">
@@ -99,16 +120,16 @@
   <!-- ══════════════ ADMIN ══════════════ -->
   <section class="view" id="view-admin" hidden>
     <div class="hero">
-      <h1>Operator</h1>
-      <p>Edit the menu from your phone. No code, no deploy.</p>
+      <h1 data-i18n="admin.title">Operator</h1>
+      <p data-i18n="admin.sub">Edit the menu from your phone. No code, no deploy.</p>
     </div>
 
     <div class="panel status" id="cloudStatus"></div>
 
     <div class="panel">
       <div class="btn-row">
-        <button class="btn primary" id="newTourBtn">+ New tour</button>
-        <button class="btn" id="brandBtn">Brand &amp; contact</button>
+        <button class="btn primary" id="newTourBtn" data-i18n="admin.newTour">+ New tour</button>
+        <button class="btn" id="brandBtn" data-i18n="admin.brand">Brand &amp; contact</button>
       </div>
     </div>
 
@@ -118,10 +139,10 @@
       <h2 id="backupTitle">Publish &amp; backup</h2>
       <p class="fineprint" id="backupNote"></p>
       <div class="btn-row">
-        <button class="btn" id="exportBtn">Export tours.json</button>
-        <button class="btn" id="copyJsonBtn">Copy JSON</button>
-        <button class="btn" id="importBtn">Import…</button>
-        <button class="btn danger" id="resetBtn">Reset to published</button>
+        <button class="btn" id="exportBtn" data-i18n="admin.export">Export tours.json</button>
+        <button class="btn" id="copyJsonBtn" data-i18n="admin.copyJson">Copy JSON</button>
+        <button class="btn" id="importBtn" data-i18n="admin.import">Import…</button>
+        <button class="btn danger" id="resetBtn" data-i18n="admin.reset">Reset to published</button>
       </div>
       <input type="file" id="importFile" accept="application/json,.json" hidden />
     </div>
@@ -130,10 +151,10 @@
 
 <!-- ══════════════ BOTTOM NAV ══════════════ -->
 <nav class="tabbar">
-  <button class="tab is-active" data-view="menu"><span>⛩</span>Tours</button>
-  <button class="tab" data-view="plan"><span>🧭</span>Itinerary<i class="badge" id="tabBadge" hidden>0</i></button>
-  <button class="tab" data-view="contact"><span>✉</span>Contact</button>
-  <button class="tab" data-view="admin" id="adminTab" hidden><span>⚙</span>Operator</button>
+  <button class="tab is-active" data-view="menu"><span>⛩</span><i data-i18n="nav.tours">Tours</i></button>
+  <button class="tab" data-view="plan"><span>🧭</span><i data-i18n="nav.itinerary">Itinerary</i><i class="badge" id="tabBadge" hidden>0</i></button>
+  <button class="tab" data-view="contact"><span>✉</span><i data-i18n="nav.contact">Contact</i></button>
+  <button class="tab" data-view="admin" id="adminTab" hidden><span>⚙</span><i data-i18n="nav.operator">Operator</i></button>
 </nav>
 
 <!-- ══════════════ SHEET (tour detail / editor / dialogs) ══════════════ -->
@@ -149,6 +170,7 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<script src="./assets/i18n.js"></script>
 <script src="./assets/config.js"></script>
 <script src="./assets/cloud.js"></script>
 <script src="./assets/app.js"></script>
